@@ -1,24 +1,14 @@
 from __future__ import annotations
 
 from pathlib import Path
-from typing import cast
 
 from agent_task_fns._ctx_types import AgentTaskCtx
+from agent_task_fns._state import repo_info
 
 
 def find_relevant_files(ctx: AgentTaskCtx, task: str) -> list[str]:
-    repo = cast(object, ctx.state.get("repo", {}))
-    if not isinstance(repo, dict):
-        raise RuntimeError("repo state is missing; call inspect_repo first")
-    repo_data = cast(dict[str, object], repo)
-    raw_files = repo_data.get("files", [])
-    if not isinstance(raw_files, list):
-        raise RuntimeError("repo files are missing; call inspect_repo first")
-    files: list[str] = []
-    raw_file_items = cast(list[object], raw_files)
-    for item in raw_file_items:
-        if isinstance(item, str):
-            files.append(item)
+    files = repo_info(ctx)["files"]
+    root = Path(str(ctx.config.get("root", ".")))
 
     terms = {
         token.strip(".,:;()[]{}").lower()
@@ -29,6 +19,7 @@ def find_relevant_files(ctx: AgentTaskCtx, task: str) -> list[str]:
     for file_name in files:
         haystack = file_name.replace("_", " ").replace("-", " ").lower()
         score = sum(1 for term in terms if term in haystack)
+        score += _content_score(root / file_name, terms)
         if file_name.endswith(".py") and any(part in file_name for part in ("proc_py", "examples")):
             score += 1
         if Path(file_name).name in {"README.md", "pyproject.toml"}:
@@ -39,3 +30,13 @@ def find_relevant_files(ctx: AgentTaskCtx, task: str) -> list[str]:
     relevant = [file_name for _, file_name in sorted(scored, reverse=True)[:8]]
     ctx.state["relevant_files"] = relevant
     return relevant
+
+
+def _content_score(path: Path, terms: set[str]) -> int:
+    if path.suffix not in {".py", ".md", ".toml"}:
+        return 0
+    try:
+        text = path.read_text(encoding="utf-8")[:3000].lower()
+    except UnicodeDecodeError:
+        return 0
+    return min(3, sum(1 for term in terms if term in text))

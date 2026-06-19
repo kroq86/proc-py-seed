@@ -18,6 +18,7 @@ The example models the procedural runtime a coding agent could use:
 - run checks;
 - summarize check output;
 - propose a patch plan without applying it;
+- render concrete next actions;
 - render a PR-style description.
 
 If local Ollama is available, the workflow also asks the configured model to

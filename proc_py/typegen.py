@@ -18,6 +18,12 @@ def generate_ctx_fns_protocol(
     """Generate the CtxFns protocol for loaded procedure names."""
 
     names = iter_proc_names(package)
+    modules = [import_module(f"{package}.{name}") for name in names]
+    fns = [
+        cast(Callable[..., object], getattr(module, name))
+        for module, name in zip(modules, names, strict=True)
+    ]
+    app_local_types = _app_local_annotation_names(package, fns) if ctx_protocol_name else []
     output = Path(output_path)
     typing_imports = "Any, Protocol" if ctx_protocol_name else "TYPE_CHECKING, Protocol"
     lines = [
@@ -26,6 +32,13 @@ def generate_ctx_fns_protocol(
         f"from typing import {typing_imports}",
         "",
     ]
+    if app_local_types:
+        lines.extend(
+            [
+                f"from {package}._state import {', '.join(app_local_types)}",
+                "",
+            ]
+        )
     if not ctx_protocol_name:
         lines.extend(
             [
@@ -43,10 +56,12 @@ def generate_ctx_fns_protocol(
         ]
     )
     if names:
-        for name in names:
-            fn = cast(Callable[..., object], getattr(import_module(f"{package}.{name}"), name))
+        for name, fn in zip(names, fns, strict=True):
+            fn_signature = _signature_for_protocol(fn, ctx_protocol_name)
+            for type_name in app_local_types:
+                fn_signature = fn_signature.replace(f"{package}._state.{type_name}", type_name)
             lines.append(
-                f"    def {name}{_signature_for_protocol(fn, ctx_protocol_name)}: ..."
+                f"    def {name}{fn_signature}: ..."
             )
     else:
         lines.append("    pass")
@@ -68,6 +83,29 @@ def generate_ctx_fns_protocol(
 
     output.write_text("\n".join(lines) + "\n")
     return output
+
+
+def _app_local_annotation_names(package: str, fns: list[Callable[..., object]]) -> list[str]:
+    try:
+        state_module = import_module(f"{package}._state")
+    except ModuleNotFoundError:
+        return []
+
+    state_names = {
+        name
+        for name, value in vars(state_module).items()
+        if not name.startswith("_")
+        and isinstance(value, type)
+        and getattr(value, "__module__", None) == state_module.__name__
+    }
+    used: set[str] = set()
+    for fn in fns:
+        for annotation in getattr(fn, "__annotations__", {}).values():
+            text = annotation if isinstance(annotation, str) else getattr(annotation, "__name__", "")
+            for name in state_names:
+                if name in text:
+                    used.add(name)
+    return sorted(used)
 
 
 def _signature_for_protocol(

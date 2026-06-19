@@ -3,9 +3,10 @@ from __future__ import annotations
 from pathlib import Path
 
 from agent_task_fns._ctx_types import AgentTaskCtx
+from agent_task_fns._state import RepoInfo
 
 
-def inspect_repo(ctx: AgentTaskCtx) -> dict[str, list[str]]:
+def inspect_repo(ctx: AgentTaskCtx) -> RepoInfo:
     root = Path(str(ctx.config.get("root", ".")))
     excluded = {".git", ".venv", ".pytest_cache", "__pycache__"}
     files: list[str] = []
@@ -18,7 +19,7 @@ def inspect_repo(ctx: AgentTaskCtx) -> dict[str, list[str]]:
 
     python_files = [file_name for file_name in files if file_name.endswith(".py")]
     test_files = [file_name for file_name in python_files if "test" in Path(file_name).name]
-    repo: dict[str, list[str]] = {
+    repo: RepoInfo = {
         "files": sorted(files),
         "python_files": sorted(python_files),
         "test_files": sorted(test_files),

@@ -5,9 +5,10 @@ from time import perf_counter
 from typing import cast
 
 from agent_task_fns._ctx_types import AgentTaskCtx
+from agent_task_fns._state import CheckResult
 
 
-def run_checks(ctx: AgentTaskCtx) -> dict[str, bool | int | float | str]:
+def run_checks(ctx: AgentTaskCtx) -> CheckResult:
     raw_command = cast(object, ctx.config.get("test_command", ["python3", "-m", "pytest", "-q"]))
     if not isinstance(raw_command, list):
         raise RuntimeError("test_command must be a list of strings")
@@ -18,7 +19,7 @@ def run_checks(ctx: AgentTaskCtx) -> dict[str, bool | int | float | str]:
 
     start = perf_counter()
     completed = run(command, capture_output=True, text=True, timeout=30, check=False)
-    result: dict[str, bool | int | float | str] = {
+    result: CheckResult = {
         "ok": completed.returncode == 0,
         "returncode": completed.returncode,
         "seconds": round(perf_counter() - start, 3),

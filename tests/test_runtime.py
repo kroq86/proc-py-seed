@@ -169,6 +169,32 @@ def test_generate_ctx_fns_protocol_can_write_app_specific_context_type(
     assert "fns: TmpFns" in content
 
 
+def test_generate_ctx_fns_protocol_imports_app_local_state_types(
+    tmp_path: Path, monkeypatch: MonkeyPatch
+) -> None:
+    package = _make_package(tmp_path, monkeypatch)
+    (package / "_state.py").write_text(
+        "from typing import TypedDict\n\n\nclass Result(TypedDict):\n    value: str\n"
+    )
+    _write_proc(
+        package,
+        "task",
+        "from tmp_fns._state import Result\n\n\ndef task(ctx) -> Result:\n"
+        "    return {'value': 'ok'}\n",
+    )
+
+    output = generate_ctx_fns_protocol(
+        package="tmp_fns",
+        output_path=tmp_path / "_ctx_types.py",
+        protocol_name="TmpFns",
+        ctx_protocol_name="TmpCtx",
+    )
+
+    content = output.read_text()
+    assert "from tmp_fns._state import Result" in content
+    assert "def task(self, ctx: TmpCtx) -> Result: ..." in content
+
+
 def test_cli_lists_and_calls_procedures(capsys: CaptureFixture[str]) -> None:
     assert main(["list"]) == 0
     list_output = capsys.readouterr().out

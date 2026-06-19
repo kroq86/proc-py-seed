@@ -223,6 +223,7 @@ run_checks(ctx)
 summarize_checks(ctx, result)
 propose_patch_plan(ctx)
 ask_ollama(ctx, prompt)
+render_next_actions(ctx)
 render_pr_description(ctx)
 system_start(ctx, task)
 ```

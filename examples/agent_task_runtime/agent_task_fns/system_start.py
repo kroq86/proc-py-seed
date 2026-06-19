@@ -11,5 +11,6 @@ def system_start(ctx: AgentTaskCtx, task: str) -> str:
     checks = ctx.fns.run_checks(ctx)
     ctx.fns.summarize_checks(ctx, checks)
     ctx.fns.propose_patch_plan(ctx)
+    ctx.fns.render_next_actions(ctx)
     ctx.t = {"task": clean_task, "relevant_files": relevant}
     return ctx.fns.render_pr_description(ctx)

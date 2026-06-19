@@ -3,22 +3,18 @@ from __future__ import annotations
 from typing import cast
 
 from agent_task_fns._ctx_types import AgentTaskCtx
+from agent_task_fns._state import relevant_files
 
 
 def render_pr_description(ctx: AgentTaskCtx) -> str:
     task = str(ctx.state.get("task", ""))
-    relevant = cast(object, ctx.state.get("relevant_files", []))
     check_summary = str(ctx.state.get("check_summary", "not run"))
     patch_plan = str(ctx.state.get("patch_plan", ""))
     llm_patch_notes = str(ctx.state.get("llm_patch_notes", ""))
     llm_pr_description = str(ctx.state.get("llm_pr_description", ""))
     ollama_error = str(ctx.state.get("ollama_error", ""))
-    files: list[str] = []
-    if isinstance(relevant, list):
-        relevant_items = cast(list[object], relevant)
-        for item in relevant_items:
-            if isinstance(item, str):
-                files.append(item)
+    files = relevant_files(ctx)
+    next_actions = _string_list(ctx.state.get("next_actions", []))
     lines = [
         "# Agent Task Report",
         "",
@@ -43,6 +39,9 @@ def render_pr_description(ctx: AgentTaskCtx) -> str:
             "## Local LLM Notes",
             llm_patch_notes or "No local LLM notes generated.",
             "",
+            "## Next Actions",
+            *[f"- {action}" for action in next_actions],
+            "",
             "## Suggested PR Description",
             llm_pr_description or f"Implements or investigates: {task}",
             "",
@@ -52,3 +51,13 @@ def render_pr_description(ctx: AgentTaskCtx) -> str:
     if ollama_error and not llm_pr_description:
         lines.extend(["", "## Local LLM", f"Ollama unavailable: {ollama_error}"])
     return "\n".join(lines)
+
+
+def _string_list(value: object) -> list[str]:
+    if not isinstance(value, list):
+        return []
+    result: list[str] = []
+    for item in cast(list[object], value):
+        if isinstance(item, str):
+            result.append(item)
+    return result

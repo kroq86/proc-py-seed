@@ -1,22 +1,19 @@
 from __future__ import annotations
 
-from typing import cast
-
 from agent_task_fns._ctx_types import AgentTaskCtx
+from agent_task_fns._state import file_text, relevant_files
 
 
 def propose_patch_plan(ctx: AgentTaskCtx) -> str:
     task = str(ctx.state.get("task", ""))
     check_summary = str(ctx.state.get("check_summary", "not run"))
-    files = _string_list(ctx.state.get("relevant_files", []))
-    file_text = cast(object, ctx.state.get("file_text", {}))
+    files = relevant_files(ctx)
+    text_by_file = file_text(ctx)
     snippets: list[str] = []
-    if isinstance(file_text, dict):
-        text_by_file = cast(dict[object, object], file_text)
-        for file_name in files[:3]:
-            text = text_by_file.get(file_name, "")
-            if isinstance(text, str):
-                snippets.append(f"### {file_name}\n{text[:700]}")
+    for file_name in files[:3]:
+        text = text_by_file.get(file_name, "")
+        if text:
+            snippets.append(f"### {file_name}\n{text[:700]}")
 
     plan = _fallback_plan(task, files, check_summary)
     prompt = "\n\n".join(
@@ -44,17 +41,20 @@ def propose_patch_plan(ctx: AgentTaskCtx) -> str:
     return plan
 
 
-def _string_list(value: object) -> list[str]:
-    if not isinstance(value, list):
-        return []
-    result: list[str] = []
-    for item in cast(list[object], value):
-        if isinstance(item, str):
-            result.append(item)
-    return result
-
-
 def _fallback_plan(task: str, files: list[str], check_summary: str) -> str:
+    task_lower = task.lower()
+    implementation_steps = [
+        "- Review the relevant files.",
+        "- Make the smallest change that satisfies the task.",
+        "- Keep procedure boundaries small and explicit.",
+    ]
+    if any(word in task_lower for word in ("type", "typing", "protocol", "ctx.fns")):
+        implementation_steps.append("- Regenerate app-local ctx.fns Protocols after signature changes.")
+    if any(word in task_lower for word in ("ollama", "llm", "prompt")):
+        implementation_steps.append("- Keep local LLM usage optional and preserve deterministic fallback behavior.")
+    if any(word in task_lower for word in ("test", "check", "pyright")):
+        implementation_steps.append("- Keep verification commands explicit in the report.")
+
     lines = [
         "### Goal",
         task or "Inspect the task and repository context.",
@@ -69,12 +69,13 @@ def _fallback_plan(task: str, files: list[str], check_summary: str) -> str:
         [
             "",
             "### Implementation steps",
-            "- Review the relevant files.",
-            "- Make the smallest change that satisfies the task.",
-            "- Keep procedure boundaries small and explicit.",
+            *implementation_steps,
             "",
             "### Tests to run",
             f"- Current check summary: {check_summary}",
+            "- `uv run --extra dev pytest -q`",
+            "- `uv run --extra dev --with pyright pyright`",
+            "- Agent dogfood workflow for this task",
         ]
     )
     return "\n".join(lines)
