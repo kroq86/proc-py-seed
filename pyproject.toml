@@ -1,0 +1,55 @@
+[project]
+name = "proc-py-seed"
+version = "0.1.0"
+description = "Experimental procedural Python runtime: one function per file, explicit ctx, reloadable ctx.fns, REPL-friendly workflow."
+readme = "README.md"
+requires-python = ">=3.11"
+license = { text = "MIT" }
+authors = [
+  { name = "kroq86" },
+]
+keywords = [
+  "python",
+  "repl",
+  "hot-reload",
+  "procedural-programming",
+  "agent-friendly",
+  "automation",
+  "type-checking",
+  "pyright",
+]
+classifiers = [
+  "Development Status :: 3 - Alpha",
+  "Intended Audience :: Developers",
+  "License :: OSI Approved :: MIT License",
+  "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: 3.11",
+  "Topic :: Software Development :: Libraries :: Application Frameworks",
+  "Topic :: Software Development :: Interpreters",
+  "Typing :: Typed",
+]
+dependencies = []
+
+[project.urls]
+Homepage = "https://github.com/kroq86/proc-py-seed"
+Repository = "https://github.com/kroq86/proc-py-seed"
+Issues = "https://github.com/kroq86/proc-py-seed/issues"
+
+[project.scripts]
+proc-py = "proc_py.cli:main"
+
+[project.optional-dependencies]
+dev = [
+  "pytest>=8.0",
+]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["."]
+
+[tool.ruff]
+line-length = 100
+
+[tool.pyright]
+pythonVersion = "3.11"
+typeCheckingMode = "strict"
