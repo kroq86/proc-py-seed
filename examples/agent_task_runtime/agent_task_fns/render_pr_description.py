@@ -15,6 +15,7 @@ def render_pr_description(ctx: AgentTaskCtx) -> str:
     ollama_error = str(ctx.state.get("ollama_error", ""))
     files = relevant_files(ctx)
     next_actions = _string_list(ctx.state.get("next_actions", []))
+    detected_checks = _string_list(ctx.state.get("detected_checks", []))
     lines = [
         "# Agent Task Report",
         "",
@@ -32,6 +33,9 @@ def render_pr_description(ctx: AgentTaskCtx) -> str:
             "",
             "## Checks",
             check_summary,
+            "",
+            "## Detected Check Commands",
+            *[f"- `{check}`" for check in detected_checks],
             "",
             "## Proposed Patch Plan",
             patch_plan or "No patch plan generated.",

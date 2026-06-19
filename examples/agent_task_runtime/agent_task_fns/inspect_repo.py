@@ -8,7 +8,21 @@ from agent_task_fns._state import RepoInfo
 
 def inspect_repo(ctx: AgentTaskCtx) -> RepoInfo:
     root = Path(str(ctx.config.get("root", ".")))
-    excluded = {".git", ".venv", ".pytest_cache", "__pycache__"}
+    excluded = {
+        ".git",
+        ".mypy_cache",
+        ".pytest_cache",
+        ".ruff_cache",
+        ".venv",
+        "__pycache__",
+        "build",
+        "coverage",
+        "dist",
+        "node_modules",
+        "release-staging",
+        "target",
+        "vendor",
+    }
     files: list[str] = []
     for path in root.rglob("*"):
         if not path.is_file():

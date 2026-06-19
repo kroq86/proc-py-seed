@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from typing import cast
+
 from agent_task_fns._ctx_types import AgentTaskCtx
 from agent_task_fns._state import file_text, relevant_files
 
@@ -7,6 +9,7 @@ from agent_task_fns._state import file_text, relevant_files
 def propose_patch_plan(ctx: AgentTaskCtx) -> str:
     task = str(ctx.state.get("task", ""))
     check_summary = str(ctx.state.get("check_summary", "not run"))
+    detected_checks = _string_list(ctx.state.get("detected_checks", []))
     files = relevant_files(ctx)
     text_by_file = file_text(ctx)
     snippets: list[str] = []
@@ -15,7 +18,7 @@ def propose_patch_plan(ctx: AgentTaskCtx) -> str:
         if text:
             snippets.append(f"### {file_name}\n{text[:700]}")
 
-    plan = _fallback_plan(task, files, check_summary)
+    plan = _fallback_plan(task, files, check_summary, detected_checks)
     prompt = "\n\n".join(
         [
             "You are reviewing a deterministic patch plan. Do not write a patch.",
@@ -30,6 +33,7 @@ def propose_patch_plan(ctx: AgentTaskCtx) -> str:
             "",
             f"Task: {task}",
             f"Checks: {check_summary}",
+            "Detected checks:\n" + "\n".join(f"- {check}" for check in detected_checks),
             "Relevant files:\n" + "\n".join(f"- {file_name}" for file_name in files),
             "Snippets:\n" + "\n\n".join(snippets),
         ]
@@ -41,7 +45,9 @@ def propose_patch_plan(ctx: AgentTaskCtx) -> str:
     return plan
 
 
-def _fallback_plan(task: str, files: list[str], check_summary: str) -> str:
+def _fallback_plan(
+    task: str, files: list[str], check_summary: str, detected_checks: list[str]
+) -> str:
     task_lower = task.lower()
     implementation_steps = [
         "- Review the relevant files.",
@@ -73,9 +79,18 @@ def _fallback_plan(task: str, files: list[str], check_summary: str) -> str:
             "",
             "### Tests to run",
             f"- Current check summary: {check_summary}",
-            "- `uv run --extra dev pytest -q`",
-            "- `uv run --extra dev --with pyright pyright`",
+            *[f"- `{check}`" for check in detected_checks],
             "- Agent dogfood workflow for this task",
         ]
     )
     return "\n".join(lines)
+
+
+def _string_list(value: object) -> list[str]:
+    if not isinstance(value, list):
+        return []
+    result: list[str] = []
+    for item in cast(list[object], value):
+        if isinstance(item, str):
+            result.append(item)
+    return result

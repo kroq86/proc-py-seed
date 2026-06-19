@@ -6,6 +6,7 @@ from agent_task_fns._ctx_types import AgentTaskCtx
 def system_start(ctx: AgentTaskCtx, task: str) -> str:
     clean_task = ctx.fns.set_task(ctx, task)
     ctx.fns.inspect_repo(ctx)
+    ctx.fns.detect_project_checks(ctx)
     relevant = ctx.fns.find_relevant_files(ctx, clean_task)
     ctx.fns.read_files(ctx, relevant)
     checks = ctx.fns.run_checks(ctx)
