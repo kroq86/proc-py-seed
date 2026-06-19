@@ -10,5 +10,9 @@ def system_start(ctx: AgentTaskCtx, task: str) -> str:
     ctx.fns.read_files(ctx, relevant)
     checks = ctx.fns.run_checks(ctx)
     ctx.fns.summarize_checks(ctx, checks)
+    prompt = ctx.fns.build_llm_prompt(ctx)
+    llm_text = ctx.fns.ask_ollama(ctx, prompt)
+    if llm_text:
+        ctx.state["llm_pr_description"] = llm_text
     ctx.t = {"task": clean_task, "relevant_files": relevant}
     return ctx.fns.render_pr_description(ctx)

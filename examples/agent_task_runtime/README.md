@@ -9,8 +9,7 @@ PYTHONPATH=examples/agent_task_runtime:. python3 examples/agent_task_runtime/run
   "add reload support to the loader"
 ```
 
-The example does not call an LLM. It models the procedural runtime an agent
-could use:
+The example models the procedural runtime a coding agent could use:
 
 - store the task in `ctx.state`;
 - inspect the repository;
@@ -19,6 +18,11 @@ could use:
 - run checks;
 - summarize check output;
 - render a PR-style description.
+
+If local Ollama is available, the workflow also asks the configured model to
+draft the PR description. The default model is `qwen2.5-coder:1.5b` for quick
+local feedback. If Ollama is unavailable or times out, the report falls back to
+the deterministic description.
 
 Regenerate app-local typing:
 

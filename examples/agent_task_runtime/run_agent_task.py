@@ -18,6 +18,8 @@ def main() -> None:
                     "root": ".",
                     "test_command": ["uv", "run", "--extra", "dev", "pytest", "-q"],
                     "max_file_chars": 4000,
+                    "ollama_model": "qwen2.5-coder:1.5b",
+                    "ollama_timeout": 60,
                 }
             ),
             "agent_task_fns",
