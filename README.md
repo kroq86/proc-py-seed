@@ -209,6 +209,29 @@ Current output shape:
 - none
 ```
 
+This repo also includes an agent workflow dogfood utility:
+[`examples/agent_task_runtime`](examples/agent_task_runtime).
+
+It models a coding-agent task loop with procedures:
+
+```text
+set_task(ctx, task)
+inspect_repo(ctx)
+find_relevant_files(ctx, task)
+read_files(ctx, files)
+run_checks(ctx)
+summarize_checks(ctx, result)
+render_pr_description(ctx)
+system_start(ctx, task)
+```
+
+Run it from the repo root:
+
+```bash
+PYTHONPATH=examples/agent_task_runtime:. python3 examples/agent_task_runtime/run_agent_task.py \
+  "add an agent task runtime dogfood example"
+```
+
 Dogfood verdict so far:
 
 - writing small automation procedures feels natural;
@@ -258,6 +281,7 @@ architecture stays pleasant as examples become real tools.
 - Run CLI commands: `list`, `call`, `new-fn`, `generate-types`, `repl`, `send`.
 - Run a local REPL process with `load_all`, `reload`, and `eval`.
 - Dogfood a small repo digest automation utility.
+- Dogfood a small coding-agent task runtime utility.
 
 ## What This Is Not
 
@@ -290,6 +314,7 @@ proc_py/
 examples/
   invoice_bot/    # tiny demo
   repo_digest/    # dogfood utility
+  agent_task_runtime/ # coding-agent workflow dogfood utility
 tests/
   test_runtime.py
 ```
@@ -299,7 +324,8 @@ tests/
 - Improve project/package options across CLI commands.
 - Add better structured REPL errors.
 - Add testing helpers for fake `Ctx` objects.
-- Add one more real dogfood utility before expanding the runtime surface.
+- Use the agent task runtime dogfood to test whether `ctx.state` needs typed
+  state models.
 - Keep this experimental unless repeated use cases prove it wants to become a
   mini-framework.
 
