@@ -19,7 +19,7 @@ def ask_ollama(ctx: AgentTaskCtx, prompt: str) -> str:
             "stream": False,
             "options": {
                 "temperature": 0.2,
-                "num_predict": 220,
+                "num_predict": 360,
                 "num_gpu": 0,
             },
         }

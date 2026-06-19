@@ -9,6 +9,8 @@ def render_pr_description(ctx: AgentTaskCtx) -> str:
     task = str(ctx.state.get("task", ""))
     relevant = cast(object, ctx.state.get("relevant_files", []))
     check_summary = str(ctx.state.get("check_summary", "not run"))
+    patch_plan = str(ctx.state.get("patch_plan", ""))
+    llm_patch_notes = str(ctx.state.get("llm_patch_notes", ""))
     llm_pr_description = str(ctx.state.get("llm_pr_description", ""))
     ollama_error = str(ctx.state.get("ollama_error", ""))
     files: list[str] = []
@@ -34,6 +36,12 @@ def render_pr_description(ctx: AgentTaskCtx) -> str:
             "",
             "## Checks",
             check_summary,
+            "",
+            "## Proposed Patch Plan",
+            patch_plan or "No patch plan generated.",
+            "",
+            "## Local LLM Notes",
+            llm_patch_notes or "No local LLM notes generated.",
             "",
             "## Suggested PR Description",
             llm_pr_description or f"Implements or investigates: {task}",

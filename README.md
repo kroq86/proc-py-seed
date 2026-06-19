@@ -221,16 +221,17 @@ find_relevant_files(ctx, task)
 read_files(ctx, files)
 run_checks(ctx)
 summarize_checks(ctx, result)
-build_llm_prompt(ctx)
+propose_patch_plan(ctx)
 ask_ollama(ctx, prompt)
 render_pr_description(ctx)
 system_start(ctx, task)
 ```
 
-If local Ollama is available, it asks the configured model to draft the PR
-description. The default dogfood model is `qwen2.5-coder:1.5b` for fast local
+If local Ollama is available, it asks the configured model to draft a patch
+plan. The default dogfood model is `qwen2.5-coder:1.5b` for fast local
 feedback. If Ollama is unavailable, times out, or the local runner fails, the
-report falls back to deterministic text.
+report falls back to deterministic text. It intentionally does not apply
+patches.
 
 Run it from the repo root:
 

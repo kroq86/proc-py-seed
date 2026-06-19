@@ -17,12 +17,16 @@ The example models the procedural runtime a coding agent could use:
 - read bounded file context;
 - run checks;
 - summarize check output;
+- propose a patch plan without applying it;
 - render a PR-style description.
 
 If local Ollama is available, the workflow also asks the configured model to
-draft the PR description. The default model is `qwen2.5-coder:1.5b` for quick
-local feedback. If Ollama is unavailable or times out, the report falls back to
-the deterministic description.
+draft the patch plan. The default model is
+`qwen2.5-coder:1.5b` for quick local feedback. If Ollama is unavailable or
+times out, the report falls back to deterministic text.
+
+The example intentionally does not apply patches. The point is to keep the
+dangerous step explicit and inspectable.
 
 Regenerate app-local typing:
 
